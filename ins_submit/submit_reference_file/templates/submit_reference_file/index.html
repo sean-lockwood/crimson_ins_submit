@@ -1,0 +1,205 @@
+<form method="post" enctype="multipart/form-data">
+{% block question1 %}
+    <div> <h3 title="Name of deliverer">Deliverer:</h3>
+        <input type='text' name='deliverer' id='deliverer' size="40" value="{{deliverer}}">
+    </div>
+{% endblock %}
+
+{% block question1a %}
+    <div> <h3 title="Other e-mail adresses to send notifications">Other e-mail addresses:</h3>
+        <input type='text' name='other_email' id='other_email' size="40" value="{{other_email}}">
+    </div>
+{% endblock %}
+
+{% block question2 %}
+    <div> <h3 title="Date of delivery">Date of delivery:</h3>
+        <input type='text' name='delivery_date' id='delivery_date' size="40" value="{{delivery_date}}">
+    </div>
+{% endblock %}
+
+{% block question3 %}
+    <div> <h3 title="Instrument">Instrument:</h3>
+        <select name='instrument' value="{{instrument}}">
+          <option>STIS</option>
+          <option>ACS</option>
+          <option>WFC3</option>
+          <option>COS</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question4 %}
+    <div> <h3 title="Type of files (Bias, Dark, etc.)">Type of files (Bias, Dark, etc.):</h3>
+        <input type='text' name='file_type' id='file_type' size="40" value="{{file_type}}">
+    </div>
+{% endblock %}
+
+{% block question5 %}
+    <div> <h3 title="Has HISTORY section in the primary header been updated to describe in detail the reason for delivery and how the files were created (yes/no)">History updated?:</h3>
+        <select name='history_updated', value="{{history_updated}}">
+         <option>YES</option>
+         <option>NO</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question6 %}
+    <div> <h3 title="Have USEAFTER, PEDIGREE, DESCRIP, COMMENT, and HISTORY (for HST files), or REFTYPE, DESCRIP, AUTHOR, USEAFTER, PEDIGREE, and HISTORY (for JWST files) been checked">Have USEAFTER, PEDIGREE, DESCRIP, COMMENT, and HISTORY (for HST files), or REFTYPE, DESCRIP, AUTHOR, USEAFTER, PEDIGREE, and HISTORY (for JWST files) been checked:</h3>
+        <select name='keywords_checked', value="{{keywords_checked}}">
+         <option>YES</option>
+         <option>NO</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question6a %}
+    <div> <h3 title="Was the DESCRIP keyword updated with a summary of why the files were updated or created (yes/no)">Was the DESCRIP keyword updated with a summary of why the files were updated or created (yes/no):</h3>
+        <select name='descrip_updated', value="{{descrip_updated}}">
+         <option>YES</option>
+         <option>NO</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question6b %}
+    <div> <h3 title="If the reference files are replacing previous versions, do the new USEAFTER dates exactly match the old ones (yes/no/ N/A)">If the reference files are replacing previous versions, do the new USEAFTER dates exactly match the old ones (yes/no/ N/A):</h3>
+        <select name='useafter_matches', value="{{useafter_matches}}">
+         <option>YES</option>
+         <option>NO</option>
+         <option>N/A</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question7 %}
+    <div> <h3 title="OPTIONAL) Verification for compliance complete (fits, json, asdf compliant, certify, etc. or N/A)">OPTIONAL) Verification for compliance complete (fits, json, asdf compliant, certify, etc. or N/A):</h3>
+        <select name='compliance_verified', value="{{compliance_verified}}">
+         <option>YES</option>
+         <option>NO</option>
+         <option>N/A</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question8 %}
+    <div> <h3 title="Should these files be ingested into the Archive, CRDS, DMS operational pipeline, or ETC systems (If the files should go to CRDS-TEST first, or you don't know, indicate so here. Otherwise yes/no)">Should these files be ingested into the Archive, CRDS, DMS operational pipeline, or ETC systems (If the files should go to CRDS-TEST first, or you don't know, indicate so here. Otherwise yes/no):</h3>
+        <textarea name='ingest_files' id='ingest_files' rows="4" cols="50">{{ingest_files}}</textarea>
+    </div>
+{% endblock %}
+
+{% block question8a %}
+    <div> <h3 title="If files are pysynphot files, should they be delivered to ETC (yes/no/ N/A)">If files are pysynphot files, should they be delivered to ETC (yes/no/ N/A):</h3>
+        <select name='etc_delivery', value="{{etc_delivery}}">
+         <option>YES</option>
+         <option>NO</option>
+         <option>N/A</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question8b %}
+    <div> <h3 title="Are these JWST ETC files (yes/no/ N/A)">Are these JWST ETC files (yes/no/ N/A):</h3>
+        <select name='jwst_etc', value="{{jwst_etc}}">
+         <option>YES</option>
+         <option>NO</option>
+         <option>N/A</option>
+        </select>
+    </div>
+{% endblock %}
+
+
+{% block question9 %}
+    <div> <h3 title="Files run through the current version of the calibration software being used by the pipeline or PYSYNPHOT and ETC (yes/no and version number)">Files run through the current version of the calibration software being used by the pipeline or PYSYNPHOT and ETC (yes/no and version number):</h3>
+        <textarea name='calpipe_version' id='calpipe_version' rows="4" cols="50">{{calpipe_version}}</textarea>
+    </div>
+{% endblock %}
+
+{% block question10 %}
+    <div> <h3 title="Are any files replacing old reference files (deliveries can be a mix of files that are or are not replacing old files) (yes/no)">Are any files replacing old reference files (deliveries can be a mix of files that are or are not replacing old files) (yes/no):</h3>
+        <select name='replacement_files', value="{{replacement_files}}">
+         <option>YES</option>
+         <option>NO</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question10a %}
+    <div> <h3 title="If yes, list them here (otherwise, N/A)">If yes, list them here (otherwise, N/A):</h3>
+        <textarea name='old_reference_files' id='old_reference_files' rows="4" cols="50">{{old_reference_files}}</textarea>
+    </div>
+{% endblock %}
+
+{% block question10b %}
+    <div> <h3 title="If the files being replaced are bad, and should not be used with any data, please indicate this here (otherwise, N/A)">If the files being replaced are bad, and should not be used with any data, please indicate this here (otherwise, N/A):</h3>
+        <select name='replacing_badfiles', value="{{replacing_badfiles}}">
+         <option>YES</option>
+         <option>NO</option>
+         <option>N/A</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question11 %}
+    <div> <h3 title="Was a JIRA issue filed in regard to the references being delivered and/or their rmap (yes/no)">Was a JIRA issue filed in regard to the references being delivered and/or their rmap (yes/no):</h3>
+        <select name='was_jira_issue_filed', value="{{was_jira_issue_files}}">
+         <option>YES</option>
+         <option>NO</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question11a %}
+    <div> <h3 title="If yes, please include the JIRA issue number here (e.g. "REDCAT-25", otherwise, N/A)">If yes, please include the JIRA issue number here (e.g. "REDCAT-25", otherwise, N/A):</h3>
+        <input type='text' name='jira_issue' id='jira_issue' size="40" value="{{jira_issue}}">
+    </div>
+{% endblock %}
+
+{% block question12 %}
+    <div> <h3 title="What is the level of change of the files (e.g. compared to old file it could be "SEVERE", "MODERATE", "TRIVIAL" - initial delivery of a reference file type is always SEVERE)">What is the level of change of the files (e.g. compared to old file it could be "SEVERE", "MODERATE", "TRIVIAL" - initial delivery of a reference file type is always SEVERE):</h3>
+        <select name='change_level', value="{{change_level}}">
+         <option>TRIVIAL</option>
+         <option>MODERATE</option>
+         <option>SEVERE</option>
+        </select>
+    </div>
+{% endblock %}
+
+{% block question12a %}
+    <div> <h3 title="If files are tables, please indicate exactly which rows have changed">If files are tables, please indicate exactly which rows have changed:</h3>
+        <textarea name='table_rows_changed' id='table_rows_changed' rows="4" cols="50">{{table_rows_changed}}</textarea>
+    </div>
+{% endblock %}
+
+{% block question13 %}
+    <div> <h3 title="Please indicate which modes (e.g. all the STIS, FUVMAMA, E140L modes) are affected by the changes in the files">Please indicate which modes (e.g. all the STIS, FUVMAMA, E140L modes) are affected by the changes in the files:</h3>
+        <textarea name='modes_affected' id='modes_affected' rows="4" cols="50">{{modes_affected}}</textarea>
+    </div>
+{% endblock %}
+
+{% block question14 %}
+    <div> <h3 title="Description of how the files were tested for correctness">Description of how the files were tested for correctness:</h3>
+        <textarea name='correctness_testing' id='correctness_testing' rows="4" cols="50">{{correctness_testing}}</textarea>
+    </div>
+{% endblock %}
+
+{% block question15 %}
+    <div> <h3 title="Additional considerations">Additional considerations:</h3>
+        <textarea name='additional_considerations' id='additional_considerations' rows="4" cols="50">{{additional_considerations}}</textarea>
+    </div>
+{% endblock %}
+
+{% block question16 %}
+    <div> <h3 title="Disk location and name of files">Disk location and name of files:</h3>
+        <textarea name='disk_files' id='disk_files' rows="4" cols="50">{{disk_files}}</textarea>
+    </div>
+{% endblock %}
+
+{% block question17 %}
+    <div> <h3 title="Reason for delivery">Reason for delivery:</h3>
+        <textarea name='delivery_reason' id='delivery_reason' rows="4" cols="50">{{delivery_reason}}</textarea>
+    </div>
+{% endblock %}
+
+<input class="btn btn-primary" type="submit" value="Submit References" >
+</form>
+
