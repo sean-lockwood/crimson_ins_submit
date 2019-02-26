@@ -11,7 +11,10 @@ def submission_list(request):
     return render(request, 'submission_form/submission_list.html', {'submissions': submissions})
 
 def most_recent(request):
-    s = Submission.objects.order_by('-published_date')[0].__dict__
+    try:
+        s = Submission.objects.order_by('-published_date')[0].__dict__
+    except IndexError:
+        return HttpResponseNotFound('<h2>No submissions found</h2>'.format(id))
     return render(request, 'submission_form/most_recent.html', {'submission': s})
 
 def submission_detail(request, id):
