@@ -4,8 +4,10 @@ INS Reference File Submission Form
 
 Requirements
 ------------
+```
 Django=1.11.8
 pyyaml
+```
 
 Setup
 -----
