@@ -13,6 +13,8 @@ with open('questions.yml') as f:
 QUESTIONS  = {q: _(v + '\n') for q, v in form_info['questions' ].items()}
 HELP_TEXTS = {q: _(v + '\n') for q, v in form_info['mouseover_text'].items()}
 
+class HorizontalRadioSelect(forms.RadioSelect):
+    template_name = 'submission_form/horizontal_select.html'
 
 class SubmissionForm(forms.ModelForm):
     class Meta:
@@ -25,7 +27,13 @@ class SubmissionForm(forms.ModelForm):
                   'table_rows_changed', 'modes_affected', 'correctness_testing', 
                   'additional_considerations', 'disk_files', 'delivery_reason']
         labels = QUESTIONS
-        widgets = {'delivery_date': forms.SelectDateWidget(), }
+        widgets = {'delivery_date'       : forms.SelectDateWidget(), 
+                   'useafter_matches'    : HorizontalRadioSelect(), 
+                   'compliance_verified' : HorizontalRadioSelect(),
+                   'etc_delivery'        : HorizontalRadioSelect(),
+                   'jwst_etc'            : HorizontalRadioSelect(),
+                   'replacing_badfiles'  : HorizontalRadioSelect(),
+                   }
         help_texts = HELP_TEXTS
     
     def clean_deliverer(self):
