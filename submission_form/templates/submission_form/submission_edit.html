@@ -1,15 +1,6 @@
-<html>
-<body>
+{% extends "submission_form/submission_edit_standalone.html" %}
 
-<style type="text/css">
-.errorlist { color: red; }
-.help { color: grey; }
-</style>
-
-{% block content %}
-    <h1>New ReDCaT Submission Form</h1>
-    <form enctype="multipart/form-data" method="POST" class="submission-form"">{% csrf_token %}
-    
+{% block extra_parameters %}  
     {% for field in form %}
     <p>
         {{ field.errors }}
@@ -21,10 +12,4 @@
         {{ field }}
     </p>
     {% endfor %}
-   
-   <button type="submit" class="save btn btn-default">Save</button>
-    </form>
-{% endblock %}
-
-</body>
-</html>
+{% endblock extra_parameters %}
