@@ -1,0 +1,14 @@
+<div>
+    <h1><a href="{% url 'submission_list' %}">Submission List</a></h1>
+</div>
+
+<a href="{% url 'submission_new' %}">Create new submission</a>&nbsp;&nbsp;&nbsp;
+<a href="{% url 'most_recent' %}">View last submission</a></br><br>
+
+{% for submission in submissions %}
+    <div>
+        <h3><a href="{% url 'submission_detail' id=submission.id %}">{{ submission.id }}</a></h3>
+        <p>{{ submission.deliverer }}  {{ submission.instrument }}  {{  submission.file_type }}<br>
+        {{ submission.published_date }} </p>
+    </div>
+{% endfor %}
