@@ -1,0 +1,18 @@
+<html>
+<body>
+
+<style type="text/css">
+.errorlist { color: red; }
+.help { color: grey; }
+</style>
+
+<h1>New ReDCaT Submission Form</h1>
+
+<form enctype="multipart/form-data" method="POST" class="submission-form"">{% csrf_token %}
+  {% block extra_parameters %}
+  {% endblock extra_parameters %}
+  <button type="submit" class="save btn btn-default">Save</button>
+</form>
+
+</body>
+</html>
