@@ -28,6 +28,7 @@ NULL_FIELDTYPES = {
 HST_INSTRUMENTS  = ['acs', 'cos', 'nicmos', 'stis', 'wfc3', 'wfpc2']
 JWST_INSTRUMENTS = ['fgs', 'miri', 'nircam', 'niriss', 'nirspec']  # system?
 UNLOCKED = '<no lock acquired>'
+UNAUTHENTICATED = '<unauthenticated>'
 
 # Preserve order of YAML dicts (from https://stackoverflow.com/a/52621703):
 yaml.add_representer(dict, lambda self, data: yaml.representer.SafeRepresenter.represent_dict(self, data.items()))
@@ -49,11 +50,12 @@ class RedcatSubmission(object):
         assert observatory in ['hst', 'jwst']
         assert string in ['dev', 'test', 'production']
         
-        self._username = '<unauthenticated>'
+        self._username = UNAUTHENTICATED
         self._lock_status = UNLOCKED
         self._observatory = observatory
         self._string = string
         self._url = urllib.parse.urljoin(BASE_URLS[self.string][self.observatory], URL_DESCRIPTION)
+        self._files = set()
         
         try:
             with urllib.request.urlopen(self.url) as req:
@@ -166,9 +168,12 @@ class RedcatSubmission(object):
         assert (self.lock_status == UNLOCKED) or ('instrument' not in self) or (self['instrument'] == self.lock_status), \
             'Locked instrument is not the one being updated!'
         
+        # Make sure files were associated with the submission:
+        assert len(self.files) > 0, 'No files have been added to submission.  Use the `S.add_file()` method.'
+        
         # More validation...
         
-        # Call crds.certify()...
+        # Call crds.certify() again? ...
         
     def add_file(self, filename):
         ''' Add a file to the submission.  Calls crds.certify() on the file.
@@ -176,7 +181,25 @@ class RedcatSubmission(object):
         if not os.access(filename, os.R_OK):
             raise FileNotFoundError("'{}' does not exist or is not readable.".format(filename))
         
+        # Call crds.certify() on file...
+        
+        self._files.add(filename)
+        
         raise NotImplementedError()
+    
+    @property
+    def files(self):
+        ''' Set of files associated with the submission.
+        '''
+        return frozenset(self._files)
+    
+    @wraps(set.remove)
+    def remove_file(self, filename, *args, **kargs):
+        self._files.remove(filename, *args, **kargs)
+    
+    #@wraps(set.pop)
+    #def pop_file(self, *args, **kargs):
+    #    return self._files.pop(*args, **kargs)
     
     @property
     def yaml(self):
@@ -199,6 +222,12 @@ class RedcatSubmission(object):
             login (str):  
         '''
         self._username = username
+        raise NotImplementedError()
+    
+    def logout(self):
+        ''' Logout user.
+        '''
+        self._username = UNAUTHENTICATED
         raise NotImplementedError()
     
     @property
