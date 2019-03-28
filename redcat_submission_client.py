@@ -55,7 +55,7 @@ class RedcatSubmission(object):
         self._observatory = observatory
         self._string = string
         self._url = urllib.parse.urljoin(BASE_URLS[self.string][self.observatory], URL_DESCRIPTION)
-        self._files = set()
+        self._files = set()  # Users should not modify this directly!
         
         try:
             with urllib.request.urlopen(self.url) as req:
@@ -86,6 +86,9 @@ class RedcatSubmission(object):
             self.observatory, self.string, 
             self.__fields__.__repr__(), 
             self.files.__repr__())
+    
+    # ------------------------------------------------------------------------------------
+    # Dictionary methods to handle form field manipulation:
     
     def __setitem__(self, key, value):
         ''' Intercept and enforce validation requirements on individual fields.
@@ -140,6 +143,71 @@ class RedcatSubmission(object):
     def items(self, *args, **kargs):
         return self.__fields__.items(*args, **kargs)
     
+    # ------------------------------------------------------------------------------------
+    # Set methods to handle filename manipulation:
+    
+    def add_file(self, filename):
+        ''' Add a file to the submission.  Calls crds.certify() on the file.
+        '''
+        if not os.access(filename, os.R_OK):
+            raise FileNotFoundError("'{}' does not exist or is not readable.".format(filename))
+        
+        # Call crds.certify() on file...
+        
+        self._files.add(filename)
+        
+        raise NotImplementedError()
+    
+    @wraps(set.remove)
+    def remove_file(self, filename, *args, **kargs):
+        self._files.remove(filename, *args, **kargs)
+    
+    #@wraps(set.pop)
+    #def pop_file(self, *args, **kargs):
+    #    return self._files.pop(*args, **kargs)
+    
+    # ------------------------------------------------------------------------------------
+    # Class properties protected from direct user manipulation:
+    
+    @property
+    def observatory(self):
+        ''' Instantiated for HST or JWST.
+        '''
+        return self._observatory
+    
+    @property
+    def string(self):
+        ''' Instantiated for production, test, or dev string.
+        '''
+        return self._string
+    
+    @property
+    def username(self):
+        ''' Currently logged-in user.
+        '''
+        return self._username
+    
+    @property
+    def url(self):
+        ''' URL to CRDS instance specified at instantiation.
+        '''
+        return self._url
+    
+    @property
+    def lock_status(self):
+        ''' Instrument currently locked.
+        '''
+        return self._lock_status
+    
+    @property
+    def files(self):
+        ''' Set of files associated with the submission.
+        '''
+        return frozenset(self._files)
+    
+    # ------------------------------------------------------------------------------------
+    # Custom methods:
+    
     def help(self):
         ''' Print help text derived from CRDS instance specified.
         '''
@@ -176,38 +244,12 @@ class RedcatSubmission(object):
         # More validation...
         
         # Call crds.certify() again? ...
-        
-    def add_file(self, filename):
-        ''' Add a file to the submission.  Calls crds.certify() on the file.
-        '''
-        if not os.access(filename, os.R_OK):
-            raise FileNotFoundError("'{}' does not exist or is not readable.".format(filename))
-        
-        # Call crds.certify() on file...
-        
-        self._files.add(filename)
-        
-        raise NotImplementedError()
     
-    @property
-    def files(self):
-        ''' Set of files associated with the submission.
-        '''
-        return frozenset(self._files)
-    
-    @wraps(set.remove)
-    def remove_file(self, filename, *args, **kargs):
-        self._files.remove(filename, *args, **kargs)
-    
-    #@wraps(set.pop)
-    #def pop_file(self, *args, **kargs):
-    #    return self._files.pop(*args, **kargs)
-    
-    @property
-    def yaml(self):
+    @wraps(yaml.dump)
+    def yaml(self, *args, **kargs):
         ''' YAML representation of this submission object.
         '''
-        return yaml.dump(dict(self))
+        return yaml.dump(dict(self), *args, **kargs)
     
     def submit(self):
         ''' Validate submission form, upload to CRDS staging, handle server-side 
@@ -241,36 +283,6 @@ class RedcatSubmission(object):
         '''
         raise NotImplementedError()
         self._username = UNAUTHENTICATED
-    
-    @property
-    def observatory(self):
-        ''' Instantiated for HST or JWST.
-        '''
-        return self._observatory
-    
-    @property
-    def string(self):
-        ''' Instantiated for production, test, or dev string.
-        '''
-        return self._string
-    
-    @property
-    def username(self):
-        ''' Currently logged-in user.
-        '''
-        return self._username
-    
-    @property
-    def url(self):
-        ''' URL to CRDS instance specified at instantiation.
-        '''
-        return self._url
-    
-    @property
-    def lock_status(self):
-        ''' Instrument currently locked.
-        '''
-        return self._lock_status
     
     def lock(self, instrument):
         ''' Acquire an instrument lock.
