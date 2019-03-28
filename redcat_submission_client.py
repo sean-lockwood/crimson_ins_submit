@@ -55,7 +55,7 @@ class RedcatSubmission(dict):
             with urllib.request.urlopen(self.url) as req:
                 self.form_description = yaml.safe_load(req)
         except (urllib.error.HTTPError, urllib.error.URLError, ) as e:
-            print ('Check your internet connection!')
+            print ('Check your network connection!')
             raise e
         # Convert list describing form to a dictionary (preserves order):
         self.form_description = {field['key']: field for field in self.form_description}
@@ -85,14 +85,23 @@ class RedcatSubmission(dict):
         '''
         assert key in self._all_keys
         if key in self._required_keys:
-            assert value, "Field '{}' cannot be empty.".format(key)
+            assert value != '', "Field '{}' cannot be empty.".format(key)  # allow Boolean False
         field_type = NULL_FIELDTYPES[self.form_description[key]['type']]
+        # Interpret boolean values in choice fields as 'Yes' and 'No':
+        if isinstance(value, bool) and ('choices' in self.form_description[key]):
+            if value:
+                value = 'Yes'
+            else:
+                value = 'No'
         assert isinstance(value, field_type), \
-            '{} must be of type {}'.format(key, field_type.__name__)
-        if 'choices' in self.form_description[key]:                     # *** <-- WORKING HERE:  Make case-insensitive
-            assert value in self.form_description[key]['choices'], \
+            "'{}' must be of type {}".format(key, field_type.__name__)
+        if 'choices' in self.form_description[key]:
+            matches = [x for x in self.form_description[key]['choices'] if x.lower() == value.lower()]
+            assert len(matches) == 1, \
                 '{} must be a valid choice: {{{}}}'.format(key, 
                     ', '.join(self.form_description[key]['choices']))
+            # Inherit case from matching choice:
+            value = matches[0]
          
         super(RedcatSubmission, self).__setitem__(key, value)
     
@@ -118,7 +127,7 @@ class RedcatSubmission(dict):
         assert (set(self.keys()) - self._optional_keys) == self._required_keys, 'Extra/missing keys...'
         
         # Check for all empty required keys at once to raise one exception:
-        empty_keys = {key for key in self._required_keys if not self[key]}
+        empty_keys = {key for key in self._required_keys if self[key] == ''}  # Don't flag False booleans
         if empty_keys:
             raise Exception('These keywords cannot be empty:\n    ' + '\n    '.join(empty_keys))
         
