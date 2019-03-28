@@ -223,14 +223,14 @@ class RedcatSubmission(object):
             username (str):  
             login (str):  
         '''
-        self._username = username
         raise NotImplementedError()
+        self._username = username
     
     def logout(self):
         ''' Logout user.
         '''
-        self._username = UNAUTHENTICATED
         raise NotImplementedError()
+        self._username = UNAUTHENTICATED
     
     @property
     def observatory(self):
@@ -278,12 +278,11 @@ class RedcatSubmission(object):
         
         assert self.username != UNAUTHENTICATED, 'You must first authenticate with the CRDS server.'
         
-        self._lock_status = instrument
-        
         raise NotImplementedError()
+        self._lock_status = instrument
     
     def unlock(self):
         ''' Drop the instrument lock.
         '''
-        self._lock_status = UNLOCKED
         raise NotImplementedError()
+        self._lock_status = UNLOCKED
