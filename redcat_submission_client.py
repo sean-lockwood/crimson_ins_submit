@@ -47,8 +47,8 @@ class RedcatSubmission(dict):
         
         self._username = '<unauthenticated>'
         self._lock_status = '<no lock acquired>'
-        self.observatory = observatory
-        self.string = string
+        self._observatory = observatory
+        self._string = string
         self.url = urllib.parse.urljoin(BASE_URLS[self.string][self.observatory], URL_DESCRIPTION)
         
         try:
@@ -165,6 +165,18 @@ class RedcatSubmission(dict):
         '''
         self._username = username
         raise NotImplementedError()
+    
+    @property
+    def observatory(self):
+        ''' Instantiated for HST or JWST.
+        '''
+        return self._observatory
+    
+    @property
+    def string(self):
+        ''' Instantiated for production, test, or dev string.
+        '''
+        return self._string
     
     @property
     def username(self):
