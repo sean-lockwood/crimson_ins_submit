@@ -3,6 +3,7 @@
 import yaml
 import urllib
 import os
+from functools import wraps
 from textwrap import wrap
 
 BASE_URLS = {
@@ -32,7 +33,7 @@ UNLOCKED = '<no lock acquired>'
 yaml.add_representer(dict, lambda self, data: yaml.representer.SafeRepresenter.represent_dict(self, data.items()))
 
 
-class RedcatSubmission(dict):
+class RedcatSubmission(object):
     ''' Client-side Redcat submission class.  Can be used to prepare, validate, and submit 
     CRDS submissions.
     
@@ -56,65 +57,91 @@ class RedcatSubmission(dict):
         
         try:
             with urllib.request.urlopen(self.url) as req:
-                self.form_description = yaml.safe_load(req)
+                self._form_description = yaml.safe_load(req)
         except (urllib.error.HTTPError, urllib.error.URLError, ) as e:
             print ('Check your network connection!')
             raise e
         # Convert list describing form to a dictionary (preserves order):
-        self.form_description = {field['key']: field for field in self.form_description}
-        for key in self.form_description:  self.form_description[key].pop('key')
+        self._form_description = {field['key']: field for field in self._form_description}
+        for key in self._form_description:  self._form_description[key].pop('key')
         
-        self._all_keys = set(self.form_description.keys())
-        self._required_keys = {x for x in self.form_description if self.form_description[x]['required']}
-        self._optional_keys = {x for x in self.form_description if not self.form_description[x]['required']}
+        self._all_keys = set(self._form_description.keys())
+        self._required_keys = {x for x in self._form_description if self._form_description[x]['required']}
+        self._optional_keys = {x for x in self._form_description if not self._form_description[x]['required']}
         
-        super(RedcatSubmission, self).__init__(self, *args, **kwargs)
+        self.__fields__ = dict()  # Users should not modify this directly!
         
-        for key in self.form_description:
-            #self[key] = NULL_FIELDTYPES[self.form_description[key]['type']]()
-            # Use parent class __setitem__() to avoid field validation upon initialization:
-            super(RedcatSubmission, self).__setitem__(key, NULL_FIELDTYPES[self.form_description[key]['type']]())
+        for key in self._form_description:
+            # Avoid field validation for initialization by accessing hidden dictionary directly:
+            self.__fields__[key] = NULL_FIELDTYPES[self._form_description[key]['type']]()
             try:
-                self[key] = self.form_description[key]['initial']
+                self[key] = self._form_description[key]['initial']
             except KeyError:
                 pass
     
     def __repr__(self):
-        return '<SUBMISSION {}-{}>:\n{}'.format(self.observatory, self.string, 
-            super(RedcatSubmission, self).__repr__())
+        return '<RedcatSubmission Object {}-{}>:\n{}'.format(self.observatory, self.string, 
+            self.__fields__.__repr__())
     
     def __setitem__(self, key, value):
         ''' Intercept and enforce validation requirements on individual fields.
-        Booleans values map to 'Yes' and 'No'.
+        Booleans values map to 'Yes' and 'No' str.
         '''
-        assert key in self._all_keys
+        assert key in self._all_keys, "Key not in submission form template:  '{}'".format(key)
         if key in self._required_keys:
             assert value != '', "Field '{}' cannot be empty.".format(key)  # allow Boolean False
-        field_type = NULL_FIELDTYPES[self.form_description[key]['type']]
+        field_type = NULL_FIELDTYPES[self._form_description[key]['type']]
+        
         # Interpret boolean values in choice fields as 'Yes' and 'No':
-        if isinstance(value, bool) and ('choices' in self.form_description[key]):
+        if isinstance(value, bool) and ('choices' in self._form_description[key]):
             if value:
                 value = 'Yes'
             else:
                 value = 'No'
         assert isinstance(value, field_type), \
             "'{}' must be of type {}".format(key, field_type.__name__)
-        if 'choices' in self.form_description[key]:
-            matches = [x for x in self.form_description[key]['choices'] if x.lower() == value.lower()]
+        
+        # Check if choice fields have allowed values:
+        if 'choices' in self._form_description[key]:
+            matches = [x for x in self._form_description[key]['choices'] if x.lower() == value.lower()]
             assert len(matches) == 1, \
                 "'{}' must be a valid choice: {{{}}}".format(key, 
-                    ', '.join(self.form_description[key]['choices']))
+                    ', '.join(self._form_description[key]['choices']))
             # Inherit case from matching choice:
             value = matches[0]
          
-        super(RedcatSubmission, self).__setitem__(key, value)
+        self.__fields__[key] = value
+    
+    @wraps(dict.__getitem__)
+    def __getitem__(self, key, *args, **kargs):
+        return self.__fields__.__getitem__(key, *args, **kargs)
+    
+    @wraps(dict.__contains__)
+    def __contains__(self, *args, **kargs):
+        return self.__fields__.__contains__(*args, **kargs)
+    
+    @wraps(dict.get)
+    def get(self, *args, **kargs):
+        return self.__fields__.get(*args, **kargs)
+    
+    @wraps(dict.keys)
+    def keys(self, *args, **kargs):
+        return self.__fields__.keys(*args, **kargs)
+    
+    @wraps(dict.values)
+    def values(self, *args, **kargs):
+        return self.__fields__.values(*args, **kargs)
+    
+    @wraps(dict.items)
+    def items(self, *args, **kargs):
+        return self.__fields__.items(*args, **kargs)
     
     def help(self):
         ''' Print help text derived from CRDS instance specified.
         '''
         # Can't easily overwrite __doc__ dynamically.
-        for key, field in self.form_description.items():
-            print (key, ' (', NULL_FIELDTYPES[self.form_description[key]['type']].__name__, 
+        for key, field in self._form_description.items():
+            print (key, ' (', NULL_FIELDTYPES[self._form_description[key]['type']].__name__, 
                 ', optional)' if not field.get('required', False) else ')', '\n', '-'*len(key), sep='')
             print ('\n'.join(wrap(field['label'])))
             if 'help_text' in field:
