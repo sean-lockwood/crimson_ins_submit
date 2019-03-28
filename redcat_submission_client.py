@@ -274,6 +274,8 @@ class RedcatSubmission(object):
         else:
             raise Exception('Instrument not supported for {}'.format(self.observatory))
         
+        assert self.username != UNAUTHENTICATED, 'You must first authenticate with the CRDS server.'
+        
         self._lock_status = instrument
         
         raise NotImplementedError()
