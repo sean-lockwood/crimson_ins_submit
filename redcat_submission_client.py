@@ -49,7 +49,7 @@ class RedcatSubmission(dict):
         self._lock_status = '<no lock acquired>'
         self._observatory = observatory
         self._string = string
-        self.url = urllib.parse.urljoin(BASE_URLS[self.string][self.observatory], URL_DESCRIPTION)
+        self._url = urllib.parse.urljoin(BASE_URLS[self.string][self.observatory], URL_DESCRIPTION)
         
         try:
             with urllib.request.urlopen(self.url) as req:
@@ -183,6 +183,12 @@ class RedcatSubmission(dict):
         ''' Currently logged-in user.
         '''
         return self._username
+    
+    @property
+    def url(self):
+        ''' URL to CRDS instance specified at instantiation.
+        '''
+        return self._url
     
     @property
     def lock_status(self):
