@@ -26,6 +26,7 @@ NULL_FIELDTYPES = {
 
 HST_INSTRUMENTS  = ['acs', 'cos', 'nicmos', 'stis', 'wfc3', 'wfpc2']
 JWST_INSTRUMENTS = ['fgs', 'miri', 'nircam', 'niriss', 'nirspec']  # system?
+UNLOCKED = '<no lock acquired>'
 
 # Preserve order of YAML dicts (from https://stackoverflow.com/a/52621703):
 yaml.add_representer(dict, lambda self, data: yaml.representer.SafeRepresenter.represent_dict(self, data.items()))
@@ -46,7 +47,7 @@ class RedcatSubmission(dict):
         assert string in ['dev', 'test', 'production']
         
         self._username = '<unauthenticated>'
-        self._lock_status = '<no lock acquired>'
+        self._lock_status = UNLOCKED
         self._observatory = observatory
         self._string = string
         self._url = urllib.parse.urljoin(BASE_URLS[self.string][self.observatory], URL_DESCRIPTION)
@@ -82,6 +83,7 @@ class RedcatSubmission(dict):
     
     def __setitem__(self, key, value):
         ''' Intercept and enforce validation requirements on individual fields.
+        Booleans values map to 'Yes' and 'No'.
         '''
         assert key in self._all_keys
         if key in self._required_keys:
@@ -98,7 +100,7 @@ class RedcatSubmission(dict):
         if 'choices' in self.form_description[key]:
             matches = [x for x in self.form_description[key]['choices'] if x.lower() == value.lower()]
             assert len(matches) == 1, \
-                '{} must be a valid choice: {{{}}}'.format(key, 
+                "'{}' must be a valid choice: {{{}}}".format(key, 
                     ', '.join(self.form_description[key]['choices']))
             # Inherit case from matching choice:
             value = matches[0]
@@ -130,6 +132,10 @@ class RedcatSubmission(dict):
         empty_keys = {key for key in self._required_keys if self[key] == ''}  # Don't flag False booleans
         if empty_keys:
             raise Exception('These keywords cannot be empty:\n    ' + '\n    '.join(empty_keys))
+        
+        # If instrument is locked and "instrument" field is defined, make sure they're the same:
+        assert (self.lock_status == UNLOCKED) or ('instrument' not in self) or (self['instrument'] == self.lock_status), \
+            'Locked instrument is not the one being updated!'
         
         # More validation...
         
@@ -217,5 +223,5 @@ class RedcatSubmission(dict):
     def unlock(self):
         ''' Drop the instrument lock.
         '''
-        self._lock_status = '<no lock acquired>'
+        self._lock_status = UNLOCKED
         raise NotImplementedError()
