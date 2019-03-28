@@ -36,6 +36,8 @@ class RedcatSubmission(dict):
     ''' Client-side Redcat submission class.  Can be used to prepare, validate, and submit 
     CRDS submissions.
     
+    Call `S.help()` to print details about the submission object form fields.
+    
     Parameters:
         observatory (str, {hst, jwst}):  Used in determining which CRDS for submission
         string (str, {production, test, dev}):  Used in determining which CRDS for submission
