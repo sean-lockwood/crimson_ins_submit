@@ -210,10 +210,20 @@ class RedcatSubmission(object):
         return yaml.dump(dict(self))
     
     def submit(self):
-        ''' Verification, send to CRDS server
+        ''' Validate submission form, upload to CRDS staging, handle server-side 
+        submission errors, drop client-side lock on success.
         '''
+        def upload_files():
+            # Do something fancy with self.files to get them into CRDS staging.
+            raise NotImplementedError()
+        
         self.validate()
+        upload_files()
+        
         raise NotImplementedError()
+        # Upload the form
+        # Handle returned server-side errors
+        # On success, server-side lock is dropped.  Change client-side lock_status.
     
     def authenticate(self, username, login):
         ''' Login to the CRDS server using an auth.mast token.
