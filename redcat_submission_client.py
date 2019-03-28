@@ -82,8 +82,10 @@ class RedcatSubmission(object):
                 pass
     
     def __repr__(self):
-        return '<RedcatSubmission Object {}-{}>:\n{}'.format(self.observatory, self.string, 
-            self.__fields__.__repr__())
+        return '<RedcatSubmission Object {}-{}>:\nFields:  {}\nFiles:  {}'.format(
+            self.observatory, self.string, 
+            self.__fields__.__repr__(), 
+            self.files.__repr__())
     
     def __setitem__(self, key, value):
         ''' Intercept and enforce validation requirements on individual fields.
