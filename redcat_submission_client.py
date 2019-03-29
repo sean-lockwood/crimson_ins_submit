@@ -10,9 +10,9 @@ BASE_URLS = {
     'dev': {
         'hst':  'https://hst-crds-dev.stsci.edu/',
         'jwst': 'https://jwst-crds-dev.stsci.edu/', },
-    #'test': {
-    #    'hst':  'https://hst-crds-test.stsci.edu/',
-    #    'jwst': 'https://jwst-crds-test.stsci.edu/', },
+    'test': {
+        'hst':  'https://hst-crds-test.stsci.edu/',
+        'jwst': 'https://jwst-crds-test.stsci.edu/', },
     #'production': {
     #    'hst':  'https://hst-crds.stsci.edu/',
     #    'jwst': 'https://jwst-crds.stsci.edu/', },
