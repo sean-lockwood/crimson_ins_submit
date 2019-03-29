@@ -26,7 +26,7 @@ NULL_FIELDTYPES = {
     'TypedChoiceField' : str, }
 
 HST_INSTRUMENTS  = ['acs', 'cos', 'nicmos', 'stis', 'wfc3', 'wfpc2']
-JWST_INSTRUMENTS = ['fgs', 'miri', 'nircam', 'niriss', 'nirspec']  # system?
+JWST_INSTRUMENTS = ['fgs', 'miri', 'nircam', 'niriss', 'nirspec', 'system']  # system?
 UNLOCKED = '<no lock acquired>'
 UNAUTHENTICATED = '<unauthenticated>'
 
@@ -38,7 +38,7 @@ class RedcatSubmission(object):
     ''' Client-side Redcat submission class.  Can be used to prepare, validate, and submit 
     CRDS submissions.
     
-    Call `S.help()` to print details about the submission object form fields.
+    Call `submission_obj.help()` to print details about the submission object form fields.
     
     Parameters:
         observatory (str, {hst, jwst}):  Used in determining which CRDS for submission
@@ -47,8 +47,10 @@ class RedcatSubmission(object):
     def __init__(self, observatory, string='dev', *args, **kwargs):
         observatory = observatory.lower()
         string = string.lower()
-        assert observatory in ['hst', 'jwst']
-        assert string in ['dev', 'test', 'production']
+        if observatory not in ['hst', 'jwst']:
+            raise ValueError('Observatory "{}" must be either "hst" or "jwst".')
+        if string not in ['dev', 'test', 'production']:
+            raise ValueError('String "{}" must be either "production", "test", or "dev".')
         
         self._username = UNAUTHENTICATED
         self._lock_status = UNLOCKED
@@ -94,9 +96,10 @@ class RedcatSubmission(object):
         ''' Intercept and enforce validation requirements on individual fields.
         Booleans values map to 'Yes' and 'No' str.
         '''
-        assert key in self._all_keys, "Key not in submission form template:  '{}'".format(key)
-        if key in self._required_keys:
-            assert value != '', "Field '{}' cannot be empty.".format(key)  # allow Boolean False
+        if key not in self._all_keys:
+            raise ValueError("Key not in submission form template:  '{}'".format(key))
+        if (key in self._required_keys) and (value == ''):  # allow Boolean False
+            raise ValueError("Field '{}' cannot be empty.".format(key))
         field_type = NULL_FIELDTYPES[self._form_description[key]['type']]
         
         # Interpret boolean values in choice fields as 'Yes' and 'No':
@@ -105,19 +108,31 @@ class RedcatSubmission(object):
                 value = 'Yes'
             else:
                 value = 'No'
-        assert isinstance(value, field_type), \
-            "'{}' must be of type {}".format(key, field_type.__name__)
+        if not isinstance(value, field_type):
+            raise ValueError("'{}' must be of type {}".format(key, field_type.__name__))
         
         # Check if choice fields have allowed values:
         if 'choices' in self._form_description[key]:
             matches = [x for x in self._form_description[key]['choices'] if x.lower() == value.lower()]
-            assert len(matches) == 1, \
-                "'{}' must be a valid choice: {{{}}}".format(key, 
-                    ', '.join(self._form_description[key]['choices']))
+            if len(matches) != 1:
+                raise ValueError("'{}' must be a valid choice: {{{}}}".format(key, 
+                                 ', '.join(self._form_description[key]['choices'])))
             # Inherit case from matching choice:
             value = matches[0]
          
         self.__fields__[key] = value
+    
+    def __delitem__(self, key, *args, **kargs):
+        ''' Reset self[key] to its default initialized value.
+        '''
+        if key in self:
+            self.__fields__[key] = NULL_FIELDTYPES[self._form_description[key]['type']]()
+            try:
+                self[key] = self._form_description[key]['initial']
+            except KeyError:
+                pass
+        else:
+            raise KeyError(key)
     
     @wraps(dict.__getitem__)
     def __getitem__(self, key, *args, **kargs):
@@ -227,19 +242,24 @@ class RedcatSubmission(object):
     def validate(self):
         ''' Validate the object for submission to CRDS.
         '''
-        assert (set(self.keys()) - self._optional_keys) == self._required_keys, 'Extra/missing keys...'
+        if (set(self.keys()) - self._optional_keys) != self._required_keys:
+            raise Exception('Extra/missing keys')
         
         # Check for all empty required keys at once to raise one exception:
         empty_keys = {key for key in self._required_keys if self[key] == ''}  # Don't flag False booleans
         if empty_keys:
-            raise Exception('These keywords cannot be empty:\n    ' + '\n    '.join(empty_keys))
+            raise ValueError('These keywords cannot be empty:\n    ' + '\n    '.join(empty_keys))
         
         # If instrument is locked and "instrument" field is defined, make sure they're the same:
-        assert (self.lock_status == UNLOCKED) or ('instrument' not in self) or (self['instrument'] == self.lock_status), \
-            'Locked instrument is not the one being updated!'
+        if (self.lock_status != UNLOCKED) and ('instrument' in self) and (self['instrument'] != self.lock_status):
+            raise ValueError("Locked instrument is not the one being updated:  "
+                             "locked='{}' vs reported='{}'".format(
+                self.lock_status, self['instrument']))
         
         # Make sure files were associated with the submission:
-        assert len(self.files) > 0, 'No files have been added to submission.  Use the `S.add_file()` method.'
+        if len(self.files) == 0:
+            raise Exception('No files have been added to submission.  '
+                            'Use the `submission_obj.add_file()` method.')
         
         # More validation...
         
@@ -291,14 +311,15 @@ class RedcatSubmission(object):
             instrument (str):  Must correspond to an instrument from the observatory 
                                specified on instantiation of the class.
         '''
-        if self.observatory == 'hst':
-            assert instrument in HST_INSTRUMENTS
-        elif self.observatory == 'jwst':
-            assert instrument in JWST_INSTRUMENTS
-        else:
-            raise Exception('Instrument not supported for {}'.format(self.observatory))
+        if ((self.observatory == 'hst')  and (instrument not in HST_INSTRUMENTS)) or \
+           ((self.observatory == 'jwst') and (instrument not in JWST_INSTRUMENTS)):
+            raise ValueError("Instrument='{}' is not a valid choice for observatory='{}'".format(
+                instrument, self.observatory))
+        elif observatory not in ['hst', 'jwst']:
+            raise Exception("Observatory not expected:  '{}'".format(self.observatory))
         
-        assert self.username != UNAUTHENTICATED, 'You must first authenticate with the CRDS server.'
+        if self.username == UNAUTHENTICATED:
+            raise Exception('You must first authenticate with the CRDS server.')
         
         raise NotImplementedError()
         self._lock_status = instrument
